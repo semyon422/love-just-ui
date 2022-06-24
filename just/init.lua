@@ -149,6 +149,7 @@ function just.wheel_over(id, over)
 end
 
 function just.button_behavior(id, over)
+	over = just.mouse_over(id, over)
 	if mouse.pressed[1] and over then
 		just.active_id = id
 	end
@@ -168,16 +169,22 @@ function just.button_behavior(id, over)
 	return changed, active, hovered
 end
 
-function just.slider_behavior(id, over, pos, out, min, max)
+function just.slider_behavior(id, over, pos, value, min, max)
 	local _, active, hovered = just.button_behavior(id, over)
 
-	local k, t = next(out)
-	local value = t[k]
+	local new_value = value
 	if just.active_id == id then
-		t[k] = min + (max - min) * pos
+		new_value = min + (max - min) * pos
 	end
 
-	return value ~= t[k], active, hovered
+	return value ~= new_value, new_value, active, hovered
+end
+
+function just.wheel_behavior(id, over)
+	over = just.wheel_over(id, over)
+	local changed = over and mouse.scroll_delta ~= 0
+
+	return changed, changed and mouse.scroll_delta or 0
 end
 
 function just.button(text)
@@ -187,7 +194,7 @@ function just.button(text)
 	last_in_rect = view:is_over(text)
 	last_id = id
 
-	local changed, active, hovered = just.button_behavior(id, just.mouse_over(id, last_in_rect))
+	local changed, active, hovered = just.button_behavior(id, last_in_rect)
 	just.nextline(view:draw(text, active, hovered))
 
 	return changed
@@ -201,7 +208,7 @@ function just.checkbox(id, out)
 	last_in_rect = view:is_over()
 	last_id = id
 
-	local changed, active, hovered = just.button_behavior(id, just.mouse_over(id, last_in_rect))
+	local changed, active, hovered = just.button_behavior(id, last_in_rect)
 	if changed then
 		t[k] = not t[k]
 	end
@@ -214,13 +221,15 @@ function just.slider(id, out, min, max, vertical)
 	id = just.get_id(id)
 	local view = get_state(id, just.views.slider)
 	local k, t = next(out)
+	local value = t[k]
 
 	last_in_rect = view:is_over()
 	last_id = id
 	local pos = view:get_pos(vertical)
 
-	local changed, active, hovered = just.slider_behavior(id, just.mouse_over(id, last_in_rect), pos, out, min, max)
-	just.nextline(view:draw(active, hovered, t[k], min, max, vertical))
+	local changed, value, active, hovered = just.slider_behavior(id, last_in_rect, pos, value, min, max)
+	just.nextline(view:draw(active, hovered, value, min, max, vertical))
+	t[k] = value
 
 	return changed
 end
@@ -232,6 +241,7 @@ function just.text(text)
 end
 
 function just.window_behavior(id, over)
+	over = just.mouse_over(id, over)
 	if mouse.pressed[1] and over then
 		just.active_id = id
 	end
@@ -256,7 +266,7 @@ function just.begin_window(id, w, h)
 
 	view:begin_draw(w, h)
 
-	local active = just.window_behavior(id, just.mouse_over(id, last_in_rect))
+	local active = just.window_behavior(id, last_in_rect)
 	if not active then
 		return 0, 0
 	end
