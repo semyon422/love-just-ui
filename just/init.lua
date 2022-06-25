@@ -76,19 +76,22 @@ local function clear_table(t)
 	end
 end
 
+local hover_ids = {}
+local next_hover_ids = {}
+
 function just._end()
 	clear_table(mouse.pressed)
 	clear_table(zindexes)
+
 	last_zindex = 0
 	line_c = 0
 	mouse.scroll_delta = 0
-	mouse.captured = just.hover_id ~= nil or just.active_id
+	mouse.captured = next(hover_ids) or just.active_id
 	mouse.dx, mouse.dy = mouse.x - mouse.px, mouse.y - mouse.py
 	mouse.px, mouse.py = mouse.x, mouse.y
-	just.hover_id = just.next_hover_id
-	just.next_hover_id = nil
-	just.wheel_hover_id = just.next_wheel_hover_id
-	just.next_wheel_hover_id = nil
+
+	clear_table(hover_ids)
+	hover_ids, next_hover_ids = next_hover_ids, hover_ids
 end
 
 function just.mousepressed(x, y, button)
@@ -126,31 +129,21 @@ local function get_state(id, view)
 	return states[id]
 end
 
-function just.mouse_over(id, over)
+function just.mouse_over(id, over, group)
 	if not zindexes[id] then
 		last_zindex = last_zindex + 1
 		zindexes[id] = last_zindex
 	end
-	if over and (not just.next_hover_id or zindexes[id] > zindexes[just.next_hover_id]) then
-		just.next_hover_id = id
+	local next_hover_id = next_hover_ids[group]
+	if over and (not next_hover_id or zindexes[id] > zindexes[next_hover_id]) then
+		next_hover_ids[group] = id
 	end
-	return over and id == just.hover_id
+	return over and id == hover_ids[group]
 end
 
-function just.wheel_over(id, over)
-	if not zindexes[id] then
-		last_zindex = last_zindex + 1
-		zindexes[id] = last_zindex
-	end
-	if over and (not just.next_wheel_hover_id or zindexes[id] > zindexes[just.next_wheel_hover_id]) then
-		just.next_wheel_hover_id = id
-	end
-	return over and id == just.wheel_hover_id
-end
-
-function just.button_behavior(id, over)
-	over = just.mouse_over(id, over)
-	if mouse.pressed[1] and over then
+function just.button_behavior(id, over, button)
+	over = just.mouse_over(id, over, "mouse")
+	if mouse.pressed[button or 1] and over then
 		just.active_id = id
 	end
 
@@ -181,7 +174,7 @@ function just.slider_behavior(id, over, pos, value, min, max)
 end
 
 function just.wheel_behavior(id, over)
-	over = just.wheel_over(id, over)
+	over = just.mouse_over(id, over, "wheel")
 	local changed = over and mouse.scroll_delta ~= 0
 
 	return changed, changed and mouse.scroll_delta or 0
@@ -241,7 +234,7 @@ function just.text(text)
 end
 
 function just.window_behavior(id, over)
-	over = just.mouse_over(id, over)
+	over = just.mouse_over(id, over, "mouse")
 	if mouse.pressed[1] and over then
 		just.active_id = id
 	end
@@ -291,7 +284,7 @@ function just.wheelscroll(out, speed)
 	end
 
 	local k, t = next(out)
-	local over = just.wheel_over(id, last_in_rect)
+	local over = just.mouse_over(id, last_in_rect, "wheel")
 	if mouse.scroll_delta ~= 0 and over then
 		t[k] = math.min(math.max(t[k] + mouse.scroll_delta * (speed or 50), last_window_height - content), 0)
 	end
