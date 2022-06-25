@@ -11,6 +11,7 @@ just.views = {
 local mouse = {
 	down = {},
 	pressed = {},
+	released = {},
 	x = 0, y = 0,
 	px = 0, py = 0,
 	dx = 0, dy = 0,
@@ -81,6 +82,7 @@ local next_hover_ids = {}
 
 function just._end()
 	clear_table(mouse.pressed)
+	clear_table(mouse.released)
 	clear_table(zindexes)
 
 	last_zindex = 0
@@ -104,6 +106,7 @@ end
 function just.mousereleased(x, y, button)
 	mouse.x, mouse.y = x, y
 	mouse.down[button] = nil
+	mouse.released[button] = true
 	return mouse.captured
 end
 
@@ -143,19 +146,20 @@ end
 
 function just.button_behavior(id, over, button)
 	over = just.mouse_over(id, over, "mouse")
-	if mouse.pressed[button or 1] and over then
+	button = button or next(mouse.pressed) or next(mouse.released) or next(mouse.down)
+	if mouse.pressed[button] and over then
 		just.active_id = id
 	end
 
 	local same_id = just.active_id == id
 
-	local down = mouse.down[1]
+	local down = mouse.down[button]
 	local active = over and same_id and down
 	local hovered = over and (same_id or not down)
 
 	local changed
 	if same_id and not down then
-		changed = over and same_id
+		changed = over and same_id and button
 		just.active_id = nil
 	end
 
