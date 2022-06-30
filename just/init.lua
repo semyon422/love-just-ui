@@ -71,7 +71,7 @@ function just.indent(w)
 	just.sameline()
 end
 
-function just.layout(size, _w)
+function just.layout(offset, size, _w)
 	local w = {}
 	local x = {}
 
@@ -83,7 +83,7 @@ function just.layout(size, _w)
 		end
 	end
 
-	local pos = 0
+	local pos = offset
 	local fill = false
 	for i = 1, #_w do
 		local v = _w[i]
@@ -99,7 +99,7 @@ function just.layout(size, _w)
 	end
 
 	local rest = size - pos
-	pos = 0
+	pos = offset
 
 	for i = 1, #_w do
 		if w[i] == 0 then
