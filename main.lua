@@ -86,6 +86,14 @@ local function window2()
 	just.sameline()
 	love.graphics.translate(-40, 20)
 	if just.button("Hello1234") then print("Hello1234") end
+	if just.button("Hello12345") then print("Hello12345") end
+	love.graphics.translate(40, -20)
+
+	love.graphics.translate(20, 0)
+	just.begin_window("Window3", 80, 80)
+	love.graphics.translate(20, 0)
+	if just.button("Hello1122") then print("Hello1122") end
+	just.end_window()
 end
 
 local x1, y1 = 100, 200

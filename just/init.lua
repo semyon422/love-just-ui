@@ -24,6 +24,7 @@ local last_id
 local next_id
 
 local containers = {}
+local container_overs = {}
 local zindexes = {}
 local last_zindex = 0
 local content_height = 0
@@ -144,6 +145,8 @@ local hover_ids = {}
 local next_hover_ids = {}
 
 function just._end()
+	assert(#containers == 0, "container not closed")
+
 	clear_table(mouse.pressed)
 	clear_table(mouse.released)
 	clear_table(zindexes)
@@ -204,7 +207,8 @@ function just.mouse_over(id, over, group)
 	if over and (not next_hover_id or zindexes[id] > zindexes[next_hover_id]) then
 		next_hover_ids[group] = id
 	end
-	return over and id == hover_ids[group]
+	local container_over = #container_overs == 0 or container_overs[#container_overs]
+	return over and container_over and id == hover_ids[group]
 end
 
 function just.button_behavior(id, over, button)
@@ -316,13 +320,15 @@ end
 
 function just.begin_window(id, w, h)
 	id = just.get_id(id)
-	table.insert(containers, id)
 
 	local view = get_state(id, just.views.window)
 	last_in_rect = view:is_over(w, h)
 	last_id = id
 	last_window_height = h
 	content_height = 0
+
+	table.insert(containers, id)
+	table.insert(container_overs, last_in_rect)
 
 	view:begin_draw(w, h)
 
@@ -334,6 +340,7 @@ function just.begin_window(id, w, h)
 end
 
 function just.end_window()
+	table.remove(container_overs)
 	local id = table.remove(containers)
 	local b = get_state(id, just.views.window)
 
