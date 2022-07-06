@@ -46,28 +46,48 @@ local line_c = 0
 local line_h = 0
 local line_w = 0
 
-function just.nextline(w, h)
-	line_w, line_h = line_c + w, line_c > 0 and math.max(line_h, h) or h
-	love.graphics.translate(-line_c, line_h)
-	line_c = 0
-	content_height = content_height + line_h
+local is_row = false
+local is_sameline = false
+
+function just.row(state)
+	is_row = false
+	just.next()
+	is_row = state
+end
+
+function just.next(w, h)
+	w, h = w or 0, h or 0
+	line_w = line_c + w
+	line_h = line_c > 0 and math.max(line_h, h) or h
+	is_sameline = false
+	if is_row then
+		love.graphics.translate(w, 0)
+		line_c = line_w
+	else
+		love.graphics.translate(-line_c, line_h)
+		line_c = 0
+		content_height = content_height + line_h
+	end
 end
 
 function just.sameline()
+	assert(not is_row, "just.sameline() can not be called in a row mode")
+	assert(not is_sameline, "just.sameline() called twice")
+	is_sameline = true
 	line_c = line_w
 	love.graphics.translate(line_c, -line_h)
 	content_height = content_height - line_h
 end
 
 function just.emptyline(h)
-	just.nextline(0, h)
+	just.next(0, h)
 end
 
 function just.indent(w)
 	if line_c == 0 then
 		line_h = 0
 	end
-	just.nextline(w, line_h)
+	just.next(w, line_h)
 	just.sameline()
 end
 
@@ -233,7 +253,7 @@ function just.button(text)
 	last_id = id
 
 	local changed, active, hovered = just.button_behavior(id, last_in_rect)
-	just.nextline(view:draw(text, active, hovered))
+	just.next(view:draw(text, active, hovered))
 
 	return changed
 end
@@ -250,7 +270,7 @@ function just.checkbox(id, out)
 	if changed then
 		t[k] = not t[k]
 	end
-	just.nextline(view:draw(active, hovered, t[k]))
+	just.next(view:draw(active, hovered, t[k]))
 
 	return changed
 end
@@ -266,7 +286,7 @@ function just.slider(id, out, min, max, vertical)
 	local pos = view:get_pos(vertical)
 
 	local changed, value, active, hovered = just.slider_behavior(id, last_in_rect, pos, value, min, max)
-	just.nextline(view:draw(active, hovered, value, min, max, vertical))
+	just.next(view:draw(active, hovered, value, min, max, vertical))
 	t[k] = value
 
 	return changed
@@ -275,7 +295,7 @@ end
 function just.text(text)
 	local id = just.get_id(text)
 	local view = get_state(id, just.views.text)
-	just.nextline(view:draw(text, math.huge))
+	just.next(view:draw(text, math.huge))
 end
 
 function just.window_behavior(id, over)

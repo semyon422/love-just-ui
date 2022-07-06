@@ -41,7 +41,7 @@ local function label(text)
 	just.text(text)
 	love.graphics.translate(0, -13)
 	just.sameline()
-	just.nextline(0, 40)
+	just.next(0, 40)
 end
 
 local scroll = {translate = 0}
@@ -88,13 +88,25 @@ local function window2()
 	if just.button("Hello1234") then print("Hello1234") end
 end
 
-local x1, y1 = 100, 100
+local x1, y1 = 100, 200
 local rotate = {a = 0}
 function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 
-	if just.button("Button A1") then print("Button A1") end
-	if just.button("Button A2") then print("Button A2") end
+	just.row(true)
+	just.button("Button 1")
+	just.button("Button 2")
+	just.button("Button 3")
+	just.row(true)
+	just.button("Button 1")
+	just.button("Button 2")
+	just.button("Button 3")
+	just.row(false)
+	just.button("Button 1")
+	just.button("Button 2")
+	just.button("Button 3")
+
+	love.graphics.origin()
 
 	local w, h = 300, 200
 	love.graphics.translate(x1, y1)
