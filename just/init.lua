@@ -88,7 +88,9 @@ function just.indent(w)
 		line_h = 0
 	end
 	just.next(w, line_h)
-	just.sameline()
+	if not is_row then
+		just.sameline()
+	end
 end
 
 function just.layout(offset, size, _w)
