@@ -44,11 +44,7 @@ local function label(text)
 	just.next(0, 40)
 end
 
-local scroll = {translate = 0}
 local function window1()
-	just.wheelscroll({translate = scroll}, 60)
-	love.graphics.translate(0, scroll.translate)
-
 	just.text("Hello") just.sameline() just.text("World")
 	just.emptyline(13)
 	just.indent(13)

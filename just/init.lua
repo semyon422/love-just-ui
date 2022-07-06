@@ -18,9 +18,6 @@ local mouse = {
 	scroll_delta = 0,
 }
 
-local last_in_rect
-local last_window_height
-local last_id
 local next_id
 
 local containers = {}
@@ -255,10 +252,7 @@ function just.button(text)
 	local id = just.get_id(text)
 	local view = get_state(id, just.views.button)
 
-	last_in_rect = view:is_over(text)
-	last_id = id
-
-	local changed, active, hovered = just.button_behavior(id, last_in_rect)
+	local changed, active, hovered = just.button_behavior(id, view:is_over(text))
 	just.next(view:draw(text, active, hovered))
 
 	return changed
@@ -269,10 +263,7 @@ function just.checkbox(id, out)
 	local view = get_state(id, just.views.checkbox)
 	local k, t = next(out)
 
-	last_in_rect = view:is_over()
-	last_id = id
-
-	local changed, active, hovered = just.button_behavior(id, last_in_rect)
+	local changed, active, hovered = just.button_behavior(id, view:is_over())
 	if changed then
 		t[k] = not t[k]
 	end
@@ -287,11 +278,9 @@ function just.slider(id, out, min, max, vertical)
 	local k, t = next(out)
 	local value = t[k]
 
-	last_in_rect = view:is_over()
-	last_id = id
 	local pos = view:get_pos(vertical)
 
-	local changed, value, active, hovered = just.slider_behavior(id, last_in_rect, pos, value, min, max)
+	local changed, value, active, hovered = just.slider_behavior(id, view:is_over(), pos, value, min, max)
 	just.next(view:draw(active, hovered, value, min, max, vertical))
 	t[k] = value
 
@@ -304,7 +293,10 @@ function just.text(text)
 	just.next(view:draw(text, math.huge))
 end
 
-function just.window_behavior(id, over)
+function just.begin_container_behavior(id, over)
+	table.insert(containers, id)
+	table.insert(container_overs, over)
+
 	over = just.mouse_over(id, over, "mouse")
 	if mouse.pressed[1] and over then
 		just.active_id = id
@@ -318,50 +310,45 @@ function just.window_behavior(id, over)
 	return same_id
 end
 
+function just.end_container_behavior()
+	table.remove(container_overs)
+	return table.remove(containers)
+end
+
 function just.begin_window(id, w, h)
 	id = just.get_id(id)
 
 	local view = get_state(id, just.views.window)
-	last_in_rect = view:is_over(w, h)
-	last_id = id
-	last_window_height = h
 	content_height = 0
-
-	table.insert(containers, id)
-	table.insert(container_overs, last_in_rect)
 
 	view:begin_draw(w, h)
 
-	local active = just.window_behavior(id, last_in_rect)
-	if not active then
-		return 0, 0
+	local over = view:is_over(w, h)
+
+	view.scroll = view.scroll or 0
+	local content = content_heights[id]
+	if content and content > h then
+		local changed, scroll = just.wheel_behavior(id, over)
+		if changed then
+			view.scroll = math.min(math.max(view.scroll + scroll * 50, h - content), 0)
+		end
 	end
-	return mouse.dx, mouse.dy
+	love.graphics.translate(0, view.scroll)
+
+	if just.begin_container_behavior(id, over) then
+		return mouse.dx, mouse.dy
+	end
+	return 0, 0
 end
 
 function just.end_window()
-	table.remove(container_overs)
-	local id = table.remove(containers)
+	local id = just.end_container_behavior()
 	local b = get_state(id, just.views.window)
 
 	content_heights[id] = content_height
 	content_height = 0
 
 	b:end_draw()
-end
-
-function just.wheelscroll(out, speed)
-	local id = last_id
-	local content = content_heights[id]
-	if content and content <= last_window_height then
-		return
-	end
-
-	local k, t = next(out)
-	local over = just.mouse_over(id, last_in_rect, "wheel")
-	if mouse.scroll_delta ~= 0 and over then
-		t[k] = math.min(math.max(t[k] + mouse.scroll_delta * (speed or 50), last_window_height - content), 0)
-	end
 end
 
 return just
