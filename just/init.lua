@@ -47,6 +47,11 @@ local line_w = 0
 local is_row = false
 local is_sameline = false
 
+function just.is_over(w, h)
+	local x, y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
+	return 0 <= x and x <= w and 0 <= y and y <= h
+end
+
 function just.row(state)
 	is_row = false
 	just.next()
