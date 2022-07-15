@@ -18,7 +18,12 @@ local mouse = {
 	scroll_delta = 0,
 }
 
+just.entered_id = false
+just.exited_id = false
+
 local next_id
+local over_id
+local any_mouse_over
 
 local containers = {}
 local container_overs = {}
@@ -153,6 +158,7 @@ function just._end()
 	clear_table(mouse.released)
 	clear_table(zindexes)
 
+	just.entered_id, just.exited_id = false, false
 	last_zindex = 0
 	line_c = 0
 	mouse.scroll_delta = 0
@@ -162,6 +168,11 @@ function just._end()
 
 	clear_table(hover_ids)
 	hover_ids, next_hover_ids = next_hover_ids, hover_ids
+
+	if not any_mouse_over then
+		over_id = nil
+	end
+	any_mouse_over = false
 end
 
 function just.mousepressed(x, y, button)
@@ -210,7 +221,17 @@ function just.mouse_over(id, over, group)
 		next_hover_ids[group] = id
 	end
 	local container_over = #container_overs == 0 or container_overs[#container_overs]
-	return over and container_over and id == hover_ids[group]
+	local mouse_over = over and container_over and id == hover_ids[group]
+	if mouse_over then
+		any_mouse_over = true
+	end
+	if mouse_over and over_id ~= id then
+		over_id = id
+		just.entered_id = id
+	elseif not mouse_over and over_id == id then
+		just.exited_id = id
+	end
+	return mouse_over
 end
 
 function just.button_behavior(id, over, button)
