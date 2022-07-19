@@ -221,7 +221,7 @@ function just.mouse_over(id, over, group)
 		next_hover_ids[group] = id
 	end
 	local container_over = #container_overs == 0 or container_overs[#container_overs]
-	local mouse_over = over and container_over and id == hover_ids[group]
+	local mouse_over = container_over and id == hover_ids[group]
 	if mouse_over then
 		any_mouse_over = true
 	end
