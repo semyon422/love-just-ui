@@ -92,7 +92,7 @@ local function window2()
 	just.end_window()
 end
 
-local x1, y1 = 100, 200
+local x1, y1 = 200, 200
 local rotate = {a = 0}
 function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
@@ -109,6 +109,13 @@ function love.draw()
 	just.button("Button 1")
 	just.button("Button 2")
 	just.button("Button 3")
+
+	if just.begin_dropdown("Dropdown 1", "Dropdown") then
+		just.button("dButton 1")
+		just.button("dButton 2")
+		just.button("dButton 3")
+		just.end_dropdown()
+	end
 
 	love.graphics.origin()
 

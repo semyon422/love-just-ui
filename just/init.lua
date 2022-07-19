@@ -377,4 +377,39 @@ function just.end_window()
 	b:end_draw()
 end
 
+function just.begin_dropdown(id, preview, w)
+	id = just.get_id(id)
+
+	local view = get_state(id, just.views.window)
+
+	if just.button(preview) then
+		view.is_open = not view.is_open
+	end
+
+	if not view.is_open then
+		return
+	end
+
+	w = w or 100
+	local h = content_heights[id] or 0
+
+	view:begin_draw(w, h)
+	local over = view:is_over(w, h)
+	just.begin_container_behavior(id, over)
+
+	content_height = 0
+
+	return true
+end
+
+function just.end_dropdown()
+	local id = just.end_container_behavior()
+	local view = get_state(id, just.views.window)
+
+	content_heights[id] = content_height
+	content_height = 0
+
+	view:end_draw()
+end
+
 return just
