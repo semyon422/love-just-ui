@@ -23,6 +23,7 @@ local mouse = {
 
 just.entered_id = false
 just.exited_id = false
+just.height = 0
 
 local next_id
 local over_id
@@ -31,8 +32,6 @@ local containers = {}
 local container_overs = {}
 local zindexes = {}
 local last_zindex = 0
-local content_height = 0
-local content_heights = {}
 
 function just.set_id(id)
 	next_id = id
@@ -76,7 +75,7 @@ function just.next(w, h)
 	else
 		love.graphics.translate(-line_c, line_h)
 		line_c = 0
-		content_height = content_height + line_h
+		just.height = just.height + line_h
 	end
 end
 
@@ -86,7 +85,7 @@ function just.sameline()
 	is_sameline = true
 	line_c = line_w
 	love.graphics.translate(line_c, -line_h)
-	content_height = content_height - line_h
+	just.height = just.height - line_h
 end
 
 function just.emptyline(h)
@@ -122,6 +121,7 @@ function just._end()
 	local any_mouse_over = next(next_hover_ids)
 
 	just.entered_id, just.exited_id = false, false
+	just.height = 0
 	last_zindex = 0
 	line_c = 0
 	mouse.scroll_delta = 0
@@ -305,14 +305,13 @@ function just.begin_window(id, w, h)
 	id = just.get_id(id)
 
 	local view = get_state(id, just.views.window)
-	content_height = 0
-
+	view.height_start = just.height
 	view:begin_draw(w, h)
 
 	local over = view:is_over(w, h)
 
 	view.scroll = view.scroll or 0
-	local content = content_heights[id]
+	local content = view.height
 	if content and content > h then
 		local changed, scroll = just.wheel_behavior(id, over)
 		if changed then
@@ -329,12 +328,9 @@ end
 
 function just.end_window()
 	local id = just.end_container_behavior()
-	local b = get_state(id, just.views.window)
-
-	content_heights[id] = content_height
-	content_height = 0
-
-	b:end_draw()
+	local view = get_state(id, just.views.window)
+	view.height = just.height - view.height_start
+	view:end_draw()
 end
 
 function just.begin_dropdown(id, preview, w)
@@ -350,14 +346,13 @@ function just.begin_dropdown(id, preview, w)
 		return
 	end
 
+	view.height_start = just.height
+	local h = view.height or 0
 	w = w or 100
-	local h = content_heights[id] or 0
 
 	view:begin_draw(w, h)
 	local over = view:is_over(w, h)
 	just.begin_container_behavior(id, over)
-
-	content_height = 0
 
 	return true
 end
@@ -365,10 +360,7 @@ end
 function just.end_dropdown()
 	local id = just.end_container_behavior()
 	local view = get_state(id, just.views.window)
-
-	content_heights[id] = content_height
-	content_height = 0
-
+	view.height = just.height - view.height_start
 	view:end_draw()
 end
 
