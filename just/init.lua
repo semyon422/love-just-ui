@@ -313,10 +313,10 @@ function just.slider(id, out, min, max, vertical)
 	return changed
 end
 
-function just.text(text)
+function just.text(text, limit)
 	local id = just.get_id(text)
 	local view = get_state(id, just.views.text)
-	just.next(view:draw(text, math.huge))
+	just.next(view:draw(text, limit or math.huge))
 end
 
 function just.begin_container_behavior(id, over)
