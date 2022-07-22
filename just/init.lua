@@ -23,7 +23,6 @@ just.exited_id = false
 
 local next_id
 local over_id
-local any_mouse_over
 
 local containers = {}
 local container_overs = {}
@@ -158,11 +157,13 @@ function just._end()
 	clear_table(mouse.released)
 	clear_table(zindexes)
 
+	local any_mouse_over = next(next_hover_ids)
+
 	just.entered_id, just.exited_id = false, false
 	last_zindex = 0
 	line_c = 0
 	mouse.scroll_delta = 0
-	mouse.captured = next(hover_ids) or just.active_id
+	mouse.captured = any_mouse_over or just.active_id
 	mouse.dx, mouse.dy = mouse.x - mouse.px, mouse.y - mouse.py
 	mouse.px, mouse.py = mouse.x, mouse.y
 
@@ -222,9 +223,6 @@ function just.mouse_over(id, over, group)
 	end
 	local container_over = #container_overs == 0 or container_overs[#container_overs]
 	local mouse_over = container_over and id == hover_ids[group]
-	if mouse_over then
-		any_mouse_over = true
-	end
 	if mouse_over and over_id ~= id then
 		over_id = id
 		just.entered_id = id
