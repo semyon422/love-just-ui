@@ -1,16 +1,5 @@
 local just = {}
 
-just.layout = require("just.layout")
-just.print = require("just.print")
-
-just.views = {
-	button = require("just.views.button"),
-	checkbox = require("just.views.checkbox"),
-	slider = require("just.views.slider"),
-	text = require("just.views.text"),
-	window = require("just.views.window"),
-}
-
 local mouse = {
 	down = {},
 	pressed = {},
@@ -20,6 +9,7 @@ local mouse = {
 	dx = 0, dy = 0,
 	scroll_delta = 0,
 }
+just.mouse = mouse
 
 just.entered_id = false
 just.exited_id = false
@@ -27,6 +17,9 @@ just.height = 0
 
 local next_id
 local over_id
+
+local hover_ids = {}
+local next_hover_ids = {}
 
 local containers = {}
 local container_overs = {}
@@ -38,10 +31,7 @@ function just.set_id(id)
 end
 
 function just.get_id(id)
-	if not next_id then
-		return id
-	end
-	id = next_id
+	id = next_id or id
 	next_id = nil
 	return id
 end
@@ -102,14 +92,19 @@ function just.indent(w)
 	end
 end
 
+function just.text(text, limit)
+	limit = limit or math.huge
+	local font = love.graphics.getFont()
+	love.graphics.printf(text, 0, 0, limit, "left")
+	local w, wrapped = font:getWrap(text, limit)
+	just.next(w, font:getHeight() * #wrapped)
+end
+
 local function clear_table(t)
 	for k in pairs(t) do
 		t[k] = nil
 	end
 end
-
-local hover_ids = {}
-local next_hover_ids = {}
 
 function just._end()
 	assert(#containers == 0, "container not closed")
@@ -162,35 +157,27 @@ function just.wheelmoved(x, y)
 	return mouse.captured
 end
 
-local states = {}
-local function get_state(id, view)
-	local state = states[id]
-	if state then
-		local mt = getmetatable(state)
-		mt.__index = view
-		return state
-	end
-	states[id] = setmetatable({}, {__index = view})
-	return states[id]
-end
-
 function just.mouse_over(id, over, group)
 	if not zindexes[id] then
 		last_zindex = last_zindex + 1
 		zindexes[id] = last_zindex
 	end
+
 	local next_hover_id = next_hover_ids[group]
 	if over and (not next_hover_id or zindexes[id] > zindexes[next_hover_id]) then
 		next_hover_ids[group] = id
 	end
+
 	local container_over = #container_overs == 0 or container_overs[#container_overs]
 	local mouse_over = container_over and id == hover_ids[group]
+
 	if mouse_over and over_id ~= id then
 		over_id = id
 		just.entered_id = id
 	elseif not mouse_over and over_id == id then
 		just.exited_id = id
 	end
+
 	return mouse_over
 end
 
@@ -234,134 +221,19 @@ function just.wheel_behavior(id, over)
 	return changed, changed and mouse.scroll_delta or 0
 end
 
-function just.button(text)
-	local id = just.get_id(text)
-	local view = get_state(id, just.views.button)
-
-	local changed, active, hovered = just.button_behavior(id, view:is_over(text))
-	just.next(view:draw(text, active, hovered))
-
-	return changed
-end
-
-function just.checkbox(id, out)
-	id = just.get_id(id)
-	local view = get_state(id, just.views.checkbox)
-	local k, t = next(out)
-
-	local changed, active, hovered = just.button_behavior(id, view:is_over())
-	if changed then
-		t[k] = not t[k]
-	end
-	just.next(view:draw(active, hovered, t[k]))
-
-	return changed
-end
-
-function just.slider(id, out, min, max, vertical)
-	id = just.get_id(id)
-	local view = get_state(id, just.views.slider)
-	local k, t = next(out)
-	local value = t[k]
-
-	local pos = view:get_pos(vertical)
-
-	local changed, value, active, hovered = just.slider_behavior(id, view:is_over(), pos, value, min, max)
-	just.next(view:draw(active, hovered, value, min, max, vertical))
-	t[k] = value
-
-	return changed
-end
-
-function just.text(text, limit)
-	local id = just.get_id(text)
-	local view = get_state(id, just.views.text)
-	just.next(view:draw(text, limit or math.huge))
-end
-
 function just.begin_container_behavior(id, over)
 	table.insert(containers, id)
 	table.insert(container_overs, over)
 
-	over = just.mouse_over(id, over, "mouse")
-	if mouse.pressed[1] and over then
-		just.active_id = id
-	end
+	local changed, active, hovered = just.button_behavior(id, over)
+	changed = just.active_id == id
 
-	local same_id = just.active_id == id
-	if same_id and not mouse.down[1] then
-		just.active_id = nil
-	end
-
-	return same_id
+	return changed, active, hovered
 end
 
 function just.end_container_behavior()
 	table.remove(container_overs)
 	return table.remove(containers)
-end
-
-function just.begin_window(id, w, h)
-	id = just.get_id(id)
-
-	local view = get_state(id, just.views.window)
-	view.height_start = just.height
-	view:begin_draw(w, h)
-
-	local over = view:is_over(w, h)
-
-	view.scroll = view.scroll or 0
-	local content = view.height
-	if content and content > h then
-		local changed, scroll = just.wheel_behavior(id, over)
-		if changed then
-			view.scroll = math.min(math.max(view.scroll + scroll * 50, h - content), 0)
-		end
-	end
-	love.graphics.translate(0, view.scroll)
-
-	if just.begin_container_behavior(id, over) then
-		return mouse.dx, mouse.dy
-	end
-	return 0, 0
-end
-
-function just.end_window()
-	local id = just.end_container_behavior()
-	local view = get_state(id, just.views.window)
-	view.height = just.height - view.height_start
-	view:end_draw()
-end
-
-function just.begin_dropdown(id, preview, w)
-	id = just.get_id(id)
-
-	local view = get_state(id, just.views.window)
-
-	if just.button(preview) then
-		view.is_open = not view.is_open
-	end
-
-	if not view.is_open then
-		return
-	end
-
-	view.height_start = just.height
-	local h = view.height or 0
-	w = w or 100
-
-	view:begin_draw(w, h)
-	local over = view:is_over(w, h)
-	just.begin_container_behavior(id, over)
-
-	return true
-end
-
-function just.end_dropdown()
-	local id = just.end_container_behavior()
-	local view = get_state(id, just.views.window)
-	view.height = just.height - view.height_start
-	view:end_draw()
 end
 
 return just

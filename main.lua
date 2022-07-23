@@ -1,4 +1,5 @@
 local just = require("just")
+local ui = require("just.ui")
 
 local event_message = ""
 
@@ -45,18 +46,19 @@ local function label(text)
 end
 
 local function window1()
+	love.graphics.setColor(1, 1, 1, 1)
 	just.text("Hello") just.sameline() just.text("World")
 	just.emptyline(13)
 	just.indent(13)
 	just.text("Hello") just.sameline() just.text("World")
-	if just.button("Hello") then print("Hello") end
+	if ui.button("Hello") then print("Hello") end
 	just.sameline()
 	label("Label 1")
 	just.sameline()
 	label("Label 2")
-	if just.button("Hello1") then print("Hello1") end
+	if ui.button("Hello1") then print("Hello1") end
 	just.sameline()
-	if just.checkbox("Hello2", {test = config}) then print("Hello2") end
+	if ui.checkbox("Hello2", {test = config}) then print("Hello2") end
 	just.sameline()
 	label("Checkbox")
 	label("Label 3")
@@ -66,30 +68,30 @@ local function window1()
 		love.graphics.rotate(-math.pi / 4)
 		love.graphics.scale(1.5, 1)
 	end
-	if just.button("Hello5") then print("Hello5") end
+	if ui.button("Hello5") then print("Hello5") end
 	just.sameline()
-	if just.slider("Hello7", {byte = config}, 0, 255) then print("Hello7") end
-	if just.button("Hello6") then print("Hello6") end
-	just.set_id("Hello66") if just.button("Hello6" .. math.random(10,99)) then print("Hello66") end
-	if just.button("Hello8") then print("Hello8") end
-	if just.button("Hello6") then print("Hello6") end
-	if just.button("Hello6") then print("Hello6") end
-	if just.button("Hello6") then print("Hello6") end
+	if ui.slider("Hello7", {byte = config}, 0, 255) then print("Hello7") end
+	if ui.button("Hello6") then print("Hello6") end
+	just.set_id("Hello66") if ui.button("Hello6" .. math.random(10,99)) then print("Hello66") end
+	if ui.button("Hello8") then print("Hello8") end
+	if ui.button("Hello6") then print("Hello6") end
+	if ui.button("Hello6") then print("Hello6") end
+	if ui.button("Hello6") then print("Hello6") end
 end
 
 local function window2()
-	if just.button("Hello123") then print("Hello123") end
+	if ui.button("Hello123") then print("Hello123") end
 	just.sameline()
 	love.graphics.translate(-40, 20)
-	if just.button("Hello1234") then print("Hello1234") end
-	if just.button("Hello12345") then print("Hello12345") end
+	if ui.button("Hello1234") then print("Hello1234") end
+	if ui.button("Hello12345") then print("Hello12345") end
 	love.graphics.translate(40, -20)
 
 	love.graphics.translate(20, 0)
-	just.begin_window("Window3", 80, 80)
+	ui.begin_window("Window3", 80, 80)
 	love.graphics.translate(20, 0)
-	if just.button("Hello1122") then print("Hello1122") end
-	just.end_window()
+	if ui.button("Hello1122") then print("Hello1122") end
+	ui.end_window()
 end
 
 local x1, y1 = 200, 200
@@ -98,41 +100,41 @@ function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 
 	just.row(true)
-	just.button("Button 1")
-	just.button("Button 2")
-	just.button("Button 3")
+	ui.button("Button 1")
+	ui.button("Button 2")
+	ui.button("Button 3")
 	just.row(true)
-	just.button("Button 1")
-	just.button("Button 2")
-	just.button("Button 3")
+	ui.button("Button 1")
+	ui.button("Button 2")
+	ui.button("Button 3")
 	just.row(false)
-	just.button("Button 1")
-	just.button("Button 2")
-	just.button("Button 3")
+	ui.button("Button 1")
+	ui.button("Button 2")
+	ui.button("Button 3")
 
-	if just.begin_dropdown("Dropdown 1", "Dropdown") then
-		just.button("dButton 1")
-		just.button("dButton 2")
-		just.button("dButton 3")
-		just.end_dropdown()
+	if ui.begin_dropdown("Dropdown 1", "Dropdown") then
+		ui.button("dButton 1")
+		ui.button("dButton 2")
+		ui.button("dButton 3")
+		ui.end_dropdown()
 	end
 
 	love.graphics.origin()
 
 	local w, h = 300, 200
 	love.graphics.translate(x1, y1)
-	just.slider("Window1 rotate", {a = rotate}, 0, 2 * math.pi)
+	ui.slider("Window1 rotate", {a = rotate}, 0, 2 * math.pi)
 	love.graphics.rotate(rotate.a)
-	local dx1, dy1 = just.begin_window("Window1", w, h)
+	local dx1, dy1 = ui.begin_window("Window1", w, h)
 	x1, y1 = x1 + dx1, y1 + dy1
 	window1()
-	just.end_window()
+	ui.end_window()
 
 	love.graphics.origin()
 	love.graphics.translate(600, 400)
-	just.begin_window("Window2", 200, 200)
+	ui.begin_window("Window2", 200, 200)
 	window2()
-	just.end_window()
+	ui.end_window()
 
 	just._end()
 end
