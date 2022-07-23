@@ -203,15 +203,15 @@ function just.button_behavior(id, over, button)
 	return changed, active, hovered
 end
 
-function just.slider_behavior(id, over, pos, value, min, max)
+function just.slider_behavior(id, over, pos, value)
 	local _, active, hovered = just.button_behavior(id, over)
 
 	local new_value = value
 	if just.active_id == id then
-		new_value = min + (max - min) * pos
+		new_value = pos
 	end
 
-	return value ~= new_value, new_value, active, hovered
+	return value ~= new_value and new_value, active, hovered
 end
 
 function just.wheel_behavior(id, over)

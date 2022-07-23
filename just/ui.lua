@@ -61,14 +61,16 @@ function ui.slider(id, out, min, max, vertical)
 	local view = ui.views.slider
 	local k, t = next(out)
 	local value = t[k]
+	local _value = (value - min) / (max - min)
 
 	local pos = view:get_pos(vertical)
+	local new_value, active, hovered = just.slider_behavior(id, view:is_over(), pos, _value)
 
-	local changed, value, active, hovered = just.slider_behavior(id, view:is_over(), pos, value, min, max)
+	value = min + (max - min) * (new_value or _value)
 	just.next(view:draw(active, hovered, value, min, max, vertical))
 	t[k] = value
 
-	return changed
+	return new_value
 end
 
 function ui.begin_window(id, w, h)
