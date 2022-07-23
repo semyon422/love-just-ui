@@ -83,8 +83,8 @@ function ui.begin_window(id, w, h)
 	view.scroll = view.scroll or 0
 	local content = view.height
 	if content and content > h then
-		local changed, scroll = just.wheel_behavior(id, over)
-		if changed then
+		local scroll = just.wheel_behavior(id, over)
+		if scroll then
 			view.scroll = math.min(math.max(view.scroll + scroll * 50, h - content), 0)
 		end
 	end

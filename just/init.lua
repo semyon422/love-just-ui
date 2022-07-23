@@ -215,10 +215,8 @@ function just.slider_behavior(id, over, pos, value, min, max)
 end
 
 function just.wheel_behavior(id, over)
-	over = just.mouse_over(id, over, "wheel")
-	local changed = over and mouse.scroll_delta ~= 0
-
-	return changed, changed and mouse.scroll_delta or 0
+	local d = mouse.scroll_delta
+	return just.mouse_over(id, over, "wheel") and d ~= 0 and d
 end
 
 function just.begin_container_behavior(id, over)
