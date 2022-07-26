@@ -92,12 +92,20 @@ function just.indent(w)
 	end
 end
 
-function just.text(text, limit)
-	limit = limit or math.huge
+function just.offset(w)
+	if not w then
+		return line_w
+	end
+	just.indent(w - line_w)
+end
+
+function just.text(text, limit, right)
+	local _limit = limit or math.huge
+	assert(not right or _limit ~= math.huge)
 	local font = love.graphics.getFont()
-	love.graphics.printf(text, 0, 0, limit, "left")
-	local w, wrapped = font:getWrap(text, limit)
-	just.next(w, font:getHeight() * #wrapped)
+	love.graphics.printf(text, 0, 0, _limit, right and "right" or "left")
+	local w, wrapped = font:getWrap(text, _limit)
+	just.next(limit or w, font:getHeight() * #wrapped)
 end
 
 local function clear_table(t)
