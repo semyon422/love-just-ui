@@ -144,6 +144,4 @@ function love.draw()
 
 	mx, my = _mx, _my
 	just._end()
-
-	love.timer.sleep(0.1)
 end
