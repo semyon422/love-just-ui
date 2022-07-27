@@ -1,130 +1,198 @@
 local just = require("just")
+local just_print = require("just.print")
 
 local ui = {}
 
-ui.views = {
-	button = require("just.views.button"),
-	checkbox = require("just.views.checkbox"),
-	slider = require("just.views.slider"),
-	window = require("just.views.window"),
-}
+local next_id
 
-local states = {}
-local function get_state(id, view)
-	local state = states[id]
-	if state then
-		local mt = getmetatable(state)
-		mt.__index = view
-		return state
-	end
-	states[id] = setmetatable({}, {__index = view})
-	return states[id]
+function ui.set_id(id)
+	next_id = id
 end
 
-local a = {love.math.colorFromBytes(15, 135, 250, 255)}
-local h = {love.math.colorFromBytes(66, 150, 250, 255)}
-local d = {love.math.colorFromBytes(66, 150, 250, 102)}
+function ui.get_id(id)
+	id = next_id or id
+	next_id = nil
+	return id
+end
+
+local colors = {
+	a = {love.math.colorFromBytes(15, 135, 250, 255)},
+	h = {love.math.colorFromBytes(66, 150, 250, 255)},
+	d = {love.math.colorFromBytes(66, 150, 250, 102)},
+}
 
 local function get_color(active, hovered)
 	if hovered then
-		return active and a or h
+		return active and colors.a or colors.h
 	end
-	return d
+	return colors.d
 end
 
 function ui.button(text)
-	local id = just.get_id(text)
-	local view = ui.views.button
+	local id = ui.get_id(text)
 
-	local changed, active, hovered = just.button_behavior(id, view:is_over())
-	just.next(view:draw(text, active, hovered))
+	local w, h = 80, 40
+	local changed, active, hovered = just.button(id, just.is_over(w, h))
+
+	love.graphics.setColor(get_color(active, hovered))
+	love.graphics.rectangle("fill", 0, 0, w, h)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.rectangle("line", 0, 0, w, h)
+	just_print(text, 0, 0, w, h, "center", "center")
+
+	just.next(w, h)
 
 	return changed
 end
 
 function ui.checkbox(id, out)
-	id = just.get_id(id)
-	local view = ui.views.checkbox
+	id = ui.get_id(id)
 	local k, t = next(out)
 
-	local changed, active, hovered = just.button_behavior(id, view:is_over())
+	local size = 40
+
+	local changed, active, hovered = just.button(id, just.is_over(size, size))
 	if changed then
 		t[k] = not t[k]
 	end
-	just.next(view:draw(active, hovered, t[k]))
+
+	love.graphics.setColor(get_color(active, hovered))
+	love.graphics.rectangle("fill", 0, 0, size, size)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.rectangle("line", 0, 0, size, size)
+
+	if t[k] then
+		love.graphics.line(size / 6, size / 2, (1 / 6 + 2 / 9) * size, 4.5 / 6 * size)
+		love.graphics.line((1 / 6 + 2 / 9) * size, 4.5 / 6 * size, 5 / 6 * size, 1.5 / 6 * size)
+	end
+
+	just.next(size, size)
 
 	return changed
 end
 
+local function get_pos(w, h, vertical)
+	local x, y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
+	local a, b = x, w
+	if vertical then
+		a, b = y, h
+	end
+	return math.min(math.max(a / b, 0), 1)
+end
+
 function ui.slider(id, out, min, max, vertical)
-	id = just.get_id(id)
-	local view = ui.views.slider
+	id = ui.get_id(id)
 	local k, t = next(out)
 	local value = t[k]
 	local _value = (value - min) / (max - min)
 
-	local pos = view:get_pos(vertical)
-	local new_value, active, hovered = just.slider_behavior(id, view:is_over(), pos, _value)
+	local w, h = 80, 40
 
-	value = min + (max - min) * (new_value or _value)
-	just.next(view:draw(active, hovered, value, min, max, vertical))
-	t[k] = value
+	local pos = get_pos(w, h, vertical)
+	local new_value, active, hovered = just.slider(id, just.is_over(w, h), pos, _value)
+
+	love.graphics.setColor(get_color(active, hovered))
+	love.graphics.rectangle("fill", 0, 0, w, h)
+	love.graphics.setColor(1, 1, 1, 0.3)
+	if vertical then
+		love.graphics.rectangle("fill", 0, 0, w, h * (value - min) / (max - min))
+	else
+		love.graphics.rectangle("fill", 0, 0, w * (value - min) / (max - min), h)
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.rectangle("line", 0, 0, w, h)
+	just_print(("%0.3f"):format(math.floor(value * 1000) / 1000), 0, 0, w, h, "center", "center")
+
+	t[k] = min + (max - min) * (new_value or _value)
+	just.next(w, h)
 
 	return new_value
 end
 
+local sw, sh
+local function drawStencil()
+	love.graphics.rectangle("fill", 0, 0, sw, sh)
+end
+
+local window_scrolls = {}
+local window_heights = {}
+local window_height_starts = {}
+local window_w = {}
+local window_h = {}
 function ui.begin_window(id, w, h)
-	id = just.get_id(id)
+	id = ui.get_id(id)
 
-	local view = get_state(id, ui.views.window)
-	view.height_start = just.height
-	view:begin_draw(w, h)
+	window_height_starts[id] = just.height
 
-	local over = view:is_over(w, h)
+	love.graphics.setColor(love.math.colorFromBytes(15, 15, 15, 240))
+	love.graphics.rectangle("fill", 0, 0, w, h)
+	love.graphics.setColor(love.math.colorFromBytes(69, 69, 69, 255))
+	love.graphics.push()
 
-	view.scroll = view.scroll or 0
-	local content = view.height
+	window_w[id] = w
+	window_h[id] = h
+
+	sw, sh = w, h
+	love.graphics.stencil(drawStencil, "replace", 1, false)
+	love.graphics.setStencilTest("greater", 0)
+
+	local over = just.is_over(w, h)
+
+	window_scrolls[id] = window_scrolls[id] or 0
+	local content = window_heights[id]
 	if content and content > h then
-		local scroll = just.wheel_behavior(id, over)
+		local scroll = just.wheel_over(id, over)
 		if scroll then
-			view.scroll = math.min(math.max(view.scroll + scroll * 50, h - content), 0)
+			window_scrolls[id] = math.min(math.max(window_scrolls[id] + scroll * 50, h - content), 0)
 		end
 	end
-	love.graphics.translate(0, view.scroll)
+	love.graphics.translate(0, window_scrolls[id])
 
-	if just.begin_container_behavior(id, over) then
+	if just.container(id, over) then
 		return just.mouse.dx, just.mouse.dy
 	end
 	return 0, 0
 end
 
 function ui.end_window()
-	local id = just.end_container_behavior()
-	local view = get_state(id, ui.views.window)
-	view.height = just.height - view.height_start
-	view:end_draw()
+	local id = just.container()
+	window_heights[id] = just.height - window_height_starts[id]
+	love.graphics.setStencilTest()
+	love.graphics.pop()
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.rectangle("line", 0, 0, window_w[id], window_h[id])
 end
 
+local dropdown_open = {}
 function ui.begin_dropdown(id, preview, w)
-	id = just.get_id(id)
-
-	local view = get_state(id, ui.views.window)
+	id = ui.get_id(id)
 
 	if ui.button(preview) then
-		view.is_open = not view.is_open
+		dropdown_open[id] = not dropdown_open[id]
 	end
 
-	if not view.is_open then
+	if not dropdown_open[id] then
 		return
 	end
 
-	view.height_start = just.height
-	local h = view.height or 0
+	window_height_starts[id] = just.height
+	local h = window_heights[id] or 0
 	w = w or 100
 
-	view:begin_draw(w, h)
-	local over = view:is_over(w, h)
-	just.begin_container_behavior(id, over)
+	love.graphics.setColor(love.math.colorFromBytes(15, 15, 15, 240))
+	love.graphics.rectangle("fill", 0, 0, w, h)
+	love.graphics.setColor(love.math.colorFromBytes(69, 69, 69, 255))
+	love.graphics.push()
+
+	window_w[id] = w
+	window_h[id] = h
+
+	sw, sh = w, h
+	love.graphics.stencil(drawStencil, "replace", 1, false)
+	love.graphics.setStencilTest("greater", 0)
+
+	local over = just.is_over(w, h)
+	just.container(id, over)
 
 	return true
 end

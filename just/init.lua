@@ -11,11 +11,10 @@ local mouse = {
 }
 just.mouse = mouse
 
-just.entered_id = false
-just.exited_id = false
+just.entered_id = nil
+just.exited_id = nil
 just.height = 0
 
-local next_id
 local over_id
 
 local hover_ids = {}
@@ -25,16 +24,6 @@ local containers = {}
 local container_overs = {}
 local zindexes = {}
 local last_zindex = 0
-
-function just.set_id(id)
-	next_id = id
-end
-
-function just.get_id(id)
-	id = next_id or id
-	next_id = nil
-	return id
-end
 
 local line_c = 0
 local line_h = 0
@@ -189,7 +178,12 @@ function just.mouse_over(id, over, group)
 	return mouse_over
 end
 
-function just.button_behavior(id, over, button)
+function just.wheel_over(id, over)
+	local d = mouse.scroll_delta
+	return just.mouse_over(id, over, "wheel") and d ~= 0 and d
+end
+
+function just.button(id, over, button)
 	over = just.mouse_over(id, over, "mouse")
 	button = button or next(mouse.pressed) or next(mouse.released) or next(mouse.down)
 	if mouse.pressed[button] and over then
@@ -211,8 +205,8 @@ function just.button_behavior(id, over, button)
 	return changed, active, hovered
 end
 
-function just.slider_behavior(id, over, pos, value)
-	local _, active, hovered = just.button_behavior(id, over)
+function just.slider(id, over, pos, value)
+	local _, active, hovered = just.button(id, over)
 
 	local new_value = value
 	if just.active_id == id then
@@ -222,24 +216,19 @@ function just.slider_behavior(id, over, pos, value)
 	return value ~= new_value and new_value, active, hovered
 end
 
-function just.wheel_behavior(id, over)
-	local d = mouse.scroll_delta
-	return just.mouse_over(id, over, "wheel") and d ~= 0 and d
-end
+function just.container(id, over)
+	if not id then
+		table.remove(container_overs)
+		return table.remove(containers)
+	end
 
-function just.begin_container_behavior(id, over)
 	table.insert(containers, id)
 	table.insert(container_overs, over)
 
-	local changed, active, hovered = just.button_behavior(id, over)
+	local changed, active, hovered = just.button(id, over)
 	changed = just.active_id == id
 
 	return changed, active, hovered
-end
-
-function just.end_container_behavior()
-	table.remove(container_overs)
-	return table.remove(containers)
 end
 
 return just

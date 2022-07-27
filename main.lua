@@ -72,7 +72,7 @@ local function window1()
 	just.sameline()
 	if ui.slider("Hello7", {byte = config}, 0, 255) then print("Hello7") end
 	if ui.button("Hello6") then print("Hello6") end
-	just.set_id("Hello66") if ui.button("Hello6" .. math.random(10,99)) then print("Hello66") end
+	ui.set_id("Hello66") if ui.button("Hello6" .. math.random(10,99)) then print("Hello66") end
 	if ui.button("Hello8") then print("Hello8") end
 	if ui.button("Hello6") then print("Hello6") end
 	if ui.button("Hello6") then print("Hello6") end
