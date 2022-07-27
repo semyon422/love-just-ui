@@ -30,8 +30,15 @@ local is_row = false
 local is_sameline = false
 
 function just.is_over(w, h)
-	local x, y = love.graphics.inverseTransformPoint(love.mouse.getPosition())
-	return 0 <= x and x <= w and 0 <= y and y <= h
+	local mx, my = love.graphics.inverseTransformPoint(love.mouse.getPosition())
+	local x, y = 0, 0
+	if w < 0 then
+		x, w = w, x
+	end
+	if h < 0 then
+		y, h = h, y
+	end
+	return x <= mx and mx <= w and y <= my and my <= h
 end
 
 function just.row(state)
@@ -91,7 +98,9 @@ function just.text(text, limit, right)
 	local font = love.graphics.getFont()
 	love.graphics.printf(text, 0, 0, _limit, right and "right" or "left")
 	local w, wrapped = font:getWrap(text, _limit)
-	just.next(limit or w, font:getHeight() * #wrapped)
+	local h = font:getHeight() * #wrapped
+	just.next(limit or w, h)
+	return limit or w, h
 end
 
 local function clear_table(t)
