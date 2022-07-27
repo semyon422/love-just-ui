@@ -96,6 +96,8 @@ end
 
 local x1, y1 = 200, 200
 local rotate = {a = 0}
+
+local mx, my = 0, 0
 function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 
@@ -121,12 +123,16 @@ function love.draw()
 
 	love.graphics.origin()
 
+	local _mx, _my = love.mouse.getPosition()
+	local dmx, dmy = _mx - mx, _my - my
+
 	local w, h = 300, 200
 	love.graphics.translate(x1, y1)
 	ui.slider("Window1 rotate", {a = rotate}, 0, 2 * math.pi)
 	love.graphics.rotate(rotate.a)
-	local dx1, dy1 = ui.begin_window("Window1", w, h)
-	x1, y1 = x1 + dx1, y1 + dy1
+	if ui.begin_window("Window1", w, h) then
+		x1, y1 = x1 + dmx, y1 + dmy
+	end
 	window1()
 	ui.end_window()
 
@@ -136,5 +142,8 @@ function love.draw()
 	window2()
 	ui.end_window()
 
+	mx, my = _mx, _my
 	just._end()
+
+	love.timer.sleep(0.1)
 end

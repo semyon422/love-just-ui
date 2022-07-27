@@ -4,12 +4,9 @@ local mouse = {
 	down = {},
 	pressed = {},
 	released = {},
-	x = 0, y = 0,
-	px = 0, py = 0,
-	dx = 0, dy = 0,
 	scroll_delta = 0,
+	captured = false,
 }
-just.mouse = mouse
 
 just.entered_id = nil
 just.exited_id = nil
@@ -118,8 +115,6 @@ function just._end()
 	line_c = 0
 	mouse.scroll_delta = 0
 	mouse.captured = any_mouse_over or just.active_id
-	mouse.dx, mouse.dy = mouse.x - mouse.px, mouse.y - mouse.py
-	mouse.px, mouse.py = mouse.x, mouse.y
 
 	clear_table(hover_ids)
 	hover_ids, next_hover_ids = next_hover_ids, hover_ids
@@ -130,26 +125,23 @@ function just._end()
 	any_mouse_over = false
 end
 
-function just.mousepressed(x, y, button)
-	mouse.x, mouse.y = x, y
+function just.mousepressed(_, _, button)
 	mouse.down[button] = true
 	mouse.pressed[button] = true
 	return mouse.captured
 end
 
-function just.mousereleased(x, y, button)
-	mouse.x, mouse.y = x, y
+function just.mousereleased(_, _, button)
 	mouse.down[button] = nil
 	mouse.released[button] = true
 	return mouse.captured
 end
 
-function just.mousemoved(x, y)
-	mouse.x, mouse.y = x, y
+function just.mousemoved()
 	return mouse.captured
 end
 
-function just.wheelmoved(x, y)
+function just.wheelmoved(_, y)
 	mouse.scroll_delta = y
 	return mouse.captured
 end

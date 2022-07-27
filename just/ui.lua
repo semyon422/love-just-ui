@@ -148,10 +148,7 @@ function ui.begin_window(id, w, h)
 	end
 	love.graphics.translate(0, window_scrolls[id])
 
-	if just.container(id, over) then
-		return just.mouse.dx, just.mouse.dy
-	end
-	return 0, 0
+	return just.container(id, over)
 end
 
 function ui.end_window()
