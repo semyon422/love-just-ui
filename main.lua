@@ -94,12 +94,16 @@ local function window2()
 	ui.end_window()
 end
 
-local x1, y1 = 200, 200
+local x1, y1 = 200, 300
 local rotate = {a = 0}
+
+local enter_exit_log = {}
+local prev_exit, prev_enter
 
 local mx, my = 0, 0
 function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
+	love.graphics.printf(table.concat(enter_exit_log, "\n"), 0, 0, love.graphics.getWidth(), "right")
 
 	just.row(true)
 	ui.button("Button 1")
@@ -114,10 +118,27 @@ function love.draw()
 	ui.button("Button 2")
 	ui.button("Button 3")
 
-	if ui.begin_dropdown("Dropdown 1", "Dropdown") then
+	if ui.begin_dropdown("Dropdown (0, 0)", "dd (0, 0)", 100, false, false) then
 		ui.button("dButton 1")
 		ui.button("dButton 2")
-		ui.button("dButton 3")
+		ui.end_dropdown()
+	end
+	love.graphics.translate(100, -40)
+	if ui.begin_dropdown("Dropdown (1, 0)", "dd (1, 0)", 100, true, false) then
+		ui.button("dButton 1")
+		ui.button("dButton 2")
+		ui.end_dropdown()
+	end
+	love.graphics.translate(100, -40)
+	if ui.begin_dropdown("Dropdown (0, 1)", "dd (0, 1)", 100, false, true) then
+		ui.button("dButton 1")
+		ui.button("dButton 2")
+		ui.end_dropdown()
+	end
+	love.graphics.translate(100, -40)
+	if ui.begin_dropdown("Dropdown (1, 1)", "dd (1, 1)", 100, true, true) then
+		ui.button("dButton 1")
+		ui.button("dButton 2")
 		ui.end_dropdown()
 	end
 
@@ -141,6 +162,16 @@ function love.draw()
 	ui.begin_window("Window2", 200, 200)
 	window2()
 	ui.end_window()
+
+	if prev_enter ~= just.entered_id then
+		table.insert(enter_exit_log, ("%s: %s"):format("entered", just.entered_id))
+		prev_enter = just.entered_id
+	end
+	if prev_exit ~= just.exited_id then
+		table.insert(enter_exit_log, ("%s: %s"):format("exited", just.exited_id))
+		prev_exit = just.exited_id
+	end
+	while #enter_exit_log > 10 do table.remove(enter_exit_log, 1) end
 
 	mx, my = _mx, _my
 	just._end()

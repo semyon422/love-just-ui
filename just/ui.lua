@@ -160,15 +160,33 @@ function ui.end_window()
 	love.graphics.rectangle("line", 0, 0, window_w[id], window_h[id])
 end
 
-local dropdown_open = {}
-function ui.begin_dropdown(id, preview, w)
+function ui.begin_dropdown(id, preview, w, open_on_enter, close_on_exit)
 	id = ui.get_id(id)
 
-	if ui.button(preview) then
-		dropdown_open[id] = not dropdown_open[id]
+	local bw, bh = 80, 40
+	local bover = just.is_over(bw, bh)
+	local changed, active, hovered = just.button(id .. "button", bover)
+
+	love.graphics.setColor(get_color(active, hovered))
+	love.graphics.rectangle("fill", 0, 0, bw, bh)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.rectangle("line", 0, 0, bw, bh)
+	just_print(preview, 0, 0, bw, bh, "center", "center")
+
+	just.next(bw, bh)
+
+	local triggered = changed
+	if open_on_enter then
+		triggered = just.entered_id == id .. "button"
 	end
 
-	if not dropdown_open[id] then
+	if triggered and just.focused_id ~= id then
+		just.focus(id)
+	elseif changed and just.focused_id == id then
+		just.focus()
+	end
+
+	if just.focused_id ~= id then
 		return
 	end
 
@@ -188,8 +206,14 @@ function ui.begin_dropdown(id, preview, w)
 	love.graphics.stencil(drawStencil, "replace", 1, false)
 	love.graphics.setStencilTest("greater", 0)
 
-	local over = just.is_over(w, h)
+	local over = just.is_over(w, h) or bover
+
 	just.container(id, over)
+	just.mouse_over(id .. "button", bover, "mouse", true)
+
+	if close_on_exit and not just.is_container_over() then
+		just.focus()
+	end
 
 	return true
 end

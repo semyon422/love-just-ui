@@ -10,9 +10,11 @@ local mouse = {
 
 just.entered_id = nil
 just.exited_id = nil
+just.focused_id = nil
 just.height = 0
 
 local over_id
+local focus_id
 
 local hover_ids = {}
 local next_hover_ids = {}
@@ -28,6 +30,10 @@ local line_w = 0
 
 local is_row = false
 local is_sameline = false
+
+function just.focus(id)
+	just.focused_id = id
+end
 
 function just.is_over(w, h)
 	local mx, my = love.graphics.inverseTransformPoint(love.mouse.getPosition())
@@ -118,7 +124,7 @@ function just._end()
 
 	local any_mouse_over = next(next_hover_ids)
 
-	just.entered_id, just.exited_id = false, false
+	just.entered_id, just.exited_id = nil, nil
 	just.height = 0
 	last_zindex = 0
 	line_c = 0
@@ -128,10 +134,12 @@ function just._end()
 	clear_table(hover_ids)
 	hover_ids, next_hover_ids = next_hover_ids, hover_ids
 
-	if not any_mouse_over then
-		over_id = nil
+	local new_over_id = hover_ids.mouse
+	if over_id ~= new_over_id then
+		just.exited_id = over_id
+		over_id = new_over_id
+		just.entered_id = new_over_id
 	end
-	any_mouse_over = false
 end
 
 function just.mousepressed(_, _, button)
@@ -155,28 +163,25 @@ function just.wheelmoved(_, y)
 	return mouse.captured
 end
 
-function just.mouse_over(id, over, group)
-	if not zindexes[id] then
+function just.is_container_over(depth)
+	local index = #container_overs - (depth or 1) + 1
+	return #container_overs == 0 or container_overs[index]
+end
+
+function just.mouse_over(id, over, group, new_zindex)
+	if not zindexes[id] or new_zindex then
 		last_zindex = last_zindex + 1
 		zindexes[id] = last_zindex
 	end
 
+	local container_over = just.is_container_over()
+
 	local next_hover_id = next_hover_ids[group]
-	if over and (not next_hover_id or zindexes[id] > zindexes[next_hover_id]) then
+	if over and container_over and (not next_hover_id or zindexes[id] > zindexes[next_hover_id]) then
 		next_hover_ids[group] = id
 	end
 
-	local container_over = #container_overs == 0 or container_overs[#container_overs]
-	local mouse_over = container_over and id == hover_ids[group]
-
-	if mouse_over and over_id ~= id then
-		over_id = id
-		just.entered_id = id
-	elseif not mouse_over and over_id == id then
-		just.exited_id = id
-	end
-
-	return mouse_over
+	return container_over and id == hover_ids[group]
 end
 
 function just.wheel_over(id, over)
