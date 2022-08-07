@@ -4,31 +4,52 @@ local ui = require("just.ui")
 local event_message = ""
 
 function love.mousepressed(x, y, button)
-	if just.mousepressed(x, y, button) then
+	if just.callbacks.mousepressed(x, y, button) then
 		return
 	end
 	event_message = ("%s: %d, %d, %d"):format("mousepressed", x, y, button)
 end
 
 function love.mousereleased(x, y, button)
-	if just.mousereleased(x, y, button) then
+	if just.callbacks.mousereleased(x, y, button) then
 		return
 	end
 	event_message = ("%s: %d, %d, %d"):format("mousereleased", x, y, button)
 end
 
 function love.mousemoved(x, y)
-	if just.mousemoved(x, y) then
+	if just.callbacks.mousemoved(x, y) then
 		return
 	end
 	event_message = ("%s: %d, %d"):format("mousemoved", x, y)
 end
 
 function love.wheelmoved(x, y)
-	if just.wheelmoved(x, y) then
+	if just.callbacks.wheelmoved(x, y) then
 		return
 	end
 	event_message = ("%s: %d, %d"):format("wheelmoved", x, y)
+end
+
+function love.keypressed(key, scancode, isrepeat)
+	if just.callbacks.keypressed(key, scancode, isrepeat) then
+		return
+	end
+	event_message = ("%s: %s, %s, %s"):format("keypressed", key, scancode, isrepeat)
+end
+
+function love.keyreleased(key, scancode, isrepeat)
+	if just.callbacks.keyreleased(key, scancode, isrepeat) then
+		return
+	end
+	event_message = ("%s: %s, %s, %s"):format("keyreleased", key, scancode, isrepeat)
+end
+
+function love.textinput(text)
+	if just.callbacks.textinput(text) then
+		return
+	end
+	event_message = ("%s: %s"):format("textinput", text)
 end
 
 local config = {
@@ -101,6 +122,7 @@ local enter_exit_log = {}
 local prev_exit, prev_enter
 
 local mx, my = 0, 0
+local text, index = "", 1
 function love.draw()
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 	love.graphics.printf(table.concat(enter_exit_log, "\n"), 0, 0, love.graphics.getWidth(), "right")
@@ -172,6 +194,22 @@ function love.draw()
 		prev_exit = just.exited_id
 	end
 	while #enter_exit_log > 10 do table.remove(enter_exit_log, 1) end
+
+	-- if just.key("q") then
+	-- 	print("q")
+	-- end
+	-- if just.key("w") then
+	-- 	print("w")
+	-- end
+	-- if just.key("a") then
+	-- 	print("a")
+	-- end
+	-- if just.key("s") then
+	-- 	print("s")
+	-- end
+
+	-- text, index = just.textinput(text, index)
+	-- print(text, index)
 
 	mx, my = _mx, _my
 	just._end()

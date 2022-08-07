@@ -109,11 +109,6 @@ function ui.slider(id, out, min, max, vertical)
 	return new_value
 end
 
-local sw, sh
-local function drawStencil()
-	love.graphics.rectangle("fill", 0, 0, sw, sh)
-end
-
 local window_scrolls = {}
 local window_heights = {}
 local window_height_starts = {}
@@ -132,9 +127,7 @@ function ui.begin_window(id, w, h)
 	window_w[id] = w
 	window_h[id] = h
 
-	sw, sh = w, h
-	love.graphics.stencil(drawStencil, "replace", 1, false)
-	love.graphics.setStencilTest("greater", 0)
+	just.clip(love.graphics.rectangle, "fill", 0, 0, w, h)
 
 	local over = just.is_over(w, h)
 
@@ -154,7 +147,7 @@ end
 function ui.end_window()
 	local id = just.container()
 	window_heights[id] = just.height - window_height_starts[id]
-	love.graphics.setStencilTest()
+	just.clip()
 	love.graphics.pop()
 	love.graphics.setColor(1, 1, 1)
 	love.graphics.rectangle("line", 0, 0, window_w[id], window_h[id])
@@ -202,9 +195,7 @@ function ui.begin_dropdown(id, preview, w, open_on_enter, close_on_exit)
 	window_w[id] = w
 	window_h[id] = h
 
-	sw, sh = w, h
-	love.graphics.stencil(drawStencil, "replace", 1, false)
-	love.graphics.setStencilTest("greater", 0)
+	just.clip(love.graphics.rectangle, "fill", 0, 0, w, h)
 
 	local over = just.is_over(w, h) or bover
 

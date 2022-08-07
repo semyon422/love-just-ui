@@ -1,4 +1,8 @@
+local utf8 = require("utf8")
+
 local just = {}
+
+just.callbacks = {}
 
 local mouse = {
 	down = {},
@@ -8,13 +12,19 @@ local mouse = {
 	captured = false,
 }
 
+local keyboard = {
+	down = {},
+	pressed = {},
+	released = {},
+	text = "",
+}
+
 just.entered_id = nil
 just.exited_id = nil
 just.focused_id = nil
 just.height = 0
 
 local over_id
-local focus_id
 
 local hover_ids = {}
 local next_hover_ids = {}
@@ -109,6 +119,26 @@ function just.text(text, limit, right)
 	return limit or w, h
 end
 
+local set_stencil, stencilfunction
+do
+	local sf, q, w, e, r, t, y, u, i
+	function set_stencil(_sf, ...)
+		sf, q, w, e, r, t, y, u, i = _sf, ...
+	end
+	function stencilfunction()
+		return sf(q, w, e, r, t, y, u, i)
+	end
+end
+function just.clip(sf, ...)
+	if not sf then
+		love.graphics.setStencilTest()
+		return
+	end
+	set_stencil(sf, ...)
+	love.graphics.stencil(stencilfunction, "replace", 1, false)
+	love.graphics.setStencilTest("greater", 0)
+end
+
 local function clear_table(t)
 	for k in pairs(t) do
 		t[k] = nil
@@ -120,9 +150,11 @@ function just._end()
 
 	clear_table(mouse.pressed)
 	clear_table(mouse.released)
+	clear_table(keyboard.pressed)
+	clear_table(keyboard.released)
 	clear_table(zindexes)
 
-	local any_mouse_over = next(next_hover_ids)
+	local any_mouse_over = next_hover_ids.mouse or next_hover_ids.wheel
 
 	just.entered_id, just.exited_id = nil, nil
 	just.height = 0
@@ -130,6 +162,8 @@ function just._end()
 	line_c = 0
 	mouse.scroll_delta = 0
 	mouse.captured = any_mouse_over or just.active_id
+
+	keyboard.text = ""
 
 	clear_table(hover_ids)
 	hover_ids, next_hover_ids = next_hover_ids, hover_ids
@@ -142,25 +176,39 @@ function just._end()
 	end
 end
 
-function just.mousepressed(_, _, button)
+function just.callbacks.mousepressed(_, _, button)
 	mouse.down[button] = true
 	mouse.pressed[button] = true
 	return mouse.captured
 end
 
-function just.mousereleased(_, _, button)
+function just.callbacks.mousereleased(_, _, button)
 	mouse.down[button] = nil
 	mouse.released[button] = true
 	return mouse.captured
 end
 
-function just.mousemoved()
+function just.callbacks.mousemoved()
 	return mouse.captured
 end
 
-function just.wheelmoved(_, y)
+function just.callbacks.wheelmoved(_, y)
 	mouse.scroll_delta = y
 	return mouse.captured
+end
+
+function just.callbacks.keypressed(_, scancode, _)
+	keyboard.down[scancode] = true
+	keyboard.pressed[scancode] = true
+end
+
+function just.callbacks.keyreleased(_, scancode, _)
+	keyboard.down[scancode] = nil
+	keyboard.released[scancode] = true
+end
+
+function just.callbacks.textinput(text)
+	keyboard.text = keyboard.text .. text
 end
 
 function just.is_container_over(depth)
@@ -235,6 +283,60 @@ function just.container(id, over)
 	changed = just.active_id == id
 
 	return changed, active, hovered
+end
+
+function just.keypressed(scancode)
+	return keyboard.pressed[scancode]
+end
+
+function just.keyreleased(scancode)
+	return keyboard.released[scancode]
+end
+
+local function text_split(text, index)
+	local _index = utf8.offset(text, index) or 1
+	return text:sub(1, _index - 1), text:sub(_index)
+end
+
+local function text_remove(text, index, forward)
+	local _
+	local left, right = text_split(text, index)
+
+	if forward then
+		_, right = text_split(right, 2)
+	else
+		left, _ = text_split(left, utf8.len(left))
+		index = math.max(1, index - 1)
+	end
+
+	return left .. right, index
+end
+
+function just.textinput(text, index)
+	local _text = keyboard.text
+	if _text ~= "" then
+		local left, right = text_split(text, index)
+		text = left .. _text .. right
+		index = index + utf8.len(_text)
+	end
+
+	local pressed = keyboard.pressed
+	if pressed.left then
+		index = index - 1
+	elseif pressed.right then
+		index = index + 1
+	elseif pressed.backspace then
+		text, index = text_remove(text, index)
+	elseif pressed.delete then
+		text, index = text_remove(text, index, true)
+	elseif pressed.home then
+		index = 1
+	elseif pressed["end"] then
+		index = utf8.len(text)
+	end
+	index = math.min(math.max(index, 1), utf8.len(text) + 1)
+
+	return text, index, text_split(text, index)
 end
 
 return just
