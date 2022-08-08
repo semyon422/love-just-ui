@@ -313,6 +313,8 @@ local function text_remove(text, index, forward)
 end
 
 function just.textinput(text, index)
+	local bt, bi = text, index
+
 	local _text = keyboard.text
 	if _text ~= "" then
 		local left, right = text_split(text, index)
@@ -334,9 +336,11 @@ function just.textinput(text, index)
 	elseif pressed["end"] then
 		index = utf8.len(text)
 	end
+
+	local changed = text ~= bt or index ~= bi
 	index = math.min(math.max(index, 1), utf8.len(text) + 1)
 
-	return text, index, text_split(text, index)
+	return changed, text, index, text_split(text, index)
 end
 
 return just
