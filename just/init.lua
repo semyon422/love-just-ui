@@ -148,6 +148,10 @@ end
 function just._end()
 	assert(#containers == 0, "container not closed")
 
+	if not zindexes[just.focused_id] then
+		just.focus()
+	end
+
 	clear_table(mouse.pressed)
 	clear_table(mouse.released)
 	clear_table(keyboard.pressed)
