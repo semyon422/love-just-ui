@@ -22,6 +22,8 @@ local keyboard = {
 just.entered_id = nil
 just.exited_id = nil
 just.focused_id = nil
+just.catching_id = nil
+just.catched_id = nil
 just.height = 0
 
 local over_id
@@ -41,8 +43,39 @@ local line_w = 0
 local is_row = false
 local is_sameline = false
 
+local line_stack = {}
+
+function just.push()
+	love.graphics.push()
+	table.insert(line_stack, {
+		c = line_c,
+		h = line_h,
+		w = line_w,
+		is_row = is_row,
+		is_sameline = is_sameline,
+		height = just.height,
+	})
+end
+
+function just.pop()
+	love.graphics.pop()
+	local state = table.remove(line_stack)
+	line_c = state.c
+	line_h = state.h
+	line_w = state.w
+	is_row = state.is_row
+	is_sameline = state.is_sameline
+	just.height = state.height
+end
+
 function just.focus(id)
 	just.focused_id = id
+end
+
+function just.catch(id)
+	local catched = just.catching_id == just.catched_id
+	just.catching_id = id
+	return catched
 end
 
 function just.is_over(w, h)
@@ -161,6 +194,7 @@ function just._end()
 	local any_mouse_over = next_hover_ids.mouse or next_hover_ids.wheel
 
 	just.entered_id, just.exited_id = nil, nil
+	just.catching_id, just.catched_id = nil, nil
 	just.height = 0
 	last_zindex = 0
 	line_c = 0
@@ -224,6 +258,10 @@ function just.mouse_over(id, over, group, new_zindex)
 	if not zindexes[id] or new_zindex then
 		last_zindex = last_zindex + 1
 		zindexes[id] = last_zindex
+	end
+
+	if just.catching_id == id then
+		just.catched_id = id
 	end
 
 	local container_over = just.is_container_over()
