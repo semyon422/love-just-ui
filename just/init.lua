@@ -152,11 +152,24 @@ function just.text(text, limit, right)
 	return limit or w, h
 end
 
-local set_stencil, stencilfunction
+local push_stencil, pop_stencil, stencilfunction
 do
+	local stack = {}
 	local sf, q, w, e, r, t, y, u, i
-	function set_stencil(_sf, ...)
+	function push_stencil(_sf, ...)
+		if sf then
+			table.insert(stack, {sf, q, w, e, r, t, y, u, i})
+		end
 		sf, q, w, e, r, t, y, u, i = _sf, ...
+		return #stack
+	end
+	function pop_stencil()
+		local s = table.remove(stack)
+		if not s then
+			sf = nil
+			return
+		end
+		sf, q, w, e, r, t, y, u, i = unpack(s, 1, 9)
 	end
 	function stencilfunction()
 		return sf(q, w, e, r, t, y, u, i)
@@ -164,12 +177,15 @@ do
 end
 function just.clip(sf, ...)
 	if not sf then
-		love.graphics.setStencilTest()
-		return
+		love.graphics.pop()
+		love.graphics.stencil(stencilfunction, "decrement", 1, true)
+		return pop_stencil()
 	end
-	set_stencil(sf, ...)
-	love.graphics.stencil(stencilfunction, "replace", 1, false)
-	love.graphics.setStencilTest("greater", 0)
+	love.graphics.push("all")
+	local layer = push_stencil(sf, ...)
+	local action = layer == 0 and "replace" or "increment"
+	love.graphics.stencil(stencilfunction, action, 1, true)
+	love.graphics.setStencilTest("greater", layer)
 end
 
 local function clear_table(t)
