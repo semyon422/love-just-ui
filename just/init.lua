@@ -21,9 +21,13 @@ local keyboard = {
 
 just.entered_id = nil
 just.exited_id = nil
+
+local focused_id = nil
 just.focused_id = nil
-just.catching_id = nil
+
+local catched_id = nil
 just.catched_id = nil
+
 just.height = 0
 
 local over_id
@@ -69,12 +73,12 @@ function just.pop()
 end
 
 function just.focus(id)
-	just.focused_id = id
+	focused_id = id
 end
 
 function just.catch(id)
-	local catched = just.catching_id == just.catched_id
-	just.catching_id = id
+	local catched = catched_id == just.catched_id
+	catched_id = id
 	return catched
 end
 
@@ -197,6 +201,7 @@ end
 function just._end()
 	assert(#containers == 0, "container not closed")
 
+	just.focused_id = focused_id
 	if not zindexes[just.focused_id] then
 		just.focus()
 	end
@@ -210,7 +215,7 @@ function just._end()
 	local any_mouse_over = next_hover_ids.mouse or next_hover_ids.wheel
 
 	just.entered_id, just.exited_id = nil, nil
-	just.catching_id, just.catched_id = nil, nil
+	catched_id, just.catched_id = nil, nil
 	just.height = 0
 	last_zindex = 0
 	line_c = 0
@@ -276,7 +281,7 @@ function just.mouse_over(id, over, group, new_zindex)
 		zindexes[id] = last_zindex
 	end
 
-	if just.catching_id == id then
+	if catched_id == id then
 		just.catched_id = id
 	end
 
