@@ -49,8 +49,8 @@ local is_sameline = false
 
 local line_stack = {}
 
-function just.push()
-	love.graphics.push()
+function just.push(...)
+	love.graphics.push(...)
 	table.insert(line_stack, {
 		c = line_c,
 		h = line_h,
@@ -181,11 +181,11 @@ do
 end
 function just.clip(sf, ...)
 	if not sf then
-		love.graphics.pop()
+		just.pop()
 		love.graphics.stencil(stencilfunction, "decrement", 1, true)
 		return pop_stencil()
 	end
-	love.graphics.push("all")
+	just.push("all")
 	local layer = push_stencil(sf, ...)
 	local action = layer == 0 and "replace" or "increment"
 	love.graphics.stencil(stencilfunction, action, 1, true)
