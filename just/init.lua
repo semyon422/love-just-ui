@@ -151,7 +151,7 @@ function just.text(text, limit, right)
 	local font = love.graphics.getFont()
 	love.graphics.printf(text, 0, 0, _limit, right and "right" or "left")
 	local w, wrapped = font:getWrap(text, _limit)
-	local h = font:getHeight() * #wrapped
+	local h = font:getHeight() * font:getLineHeight() * #wrapped
 	just.next(limit or w, h)
 	return limit or w, h
 end
@@ -376,6 +376,7 @@ local function text_remove(text, index, forward)
 end
 
 function just.textinput(text, index)
+	text = tostring(text)
 	index = index or utf8.len(text) + 1
 	local bt, bi = text, index
 
