@@ -201,10 +201,10 @@ end
 function just._end()
 	assert(#containers == 0, "container not closed")
 
-	just.focused_id = focused_id
-	if not zindexes[just.focused_id] then
+	if not zindexes[focused_id] then
 		just.focus()
 	end
+	just.focused_id = focused_id
 
 	clear_table(mouse.pressed)
 	clear_table(mouse.released)
@@ -275,7 +275,12 @@ function just.is_container_over(depth)
 	return #container_overs == 0 or container_overs[index]
 end
 
+function just.container_id()
+	return containers[#containers]
+end
+
 function just.mouse_over(id, over, group, new_zindex)
+	assert(group, "missing group")
 	if not zindexes[id] or new_zindex then
 		last_zindex = last_zindex + 1
 		zindexes[id] = last_zindex
@@ -298,6 +303,11 @@ end
 function just.wheel_over(id, over)
 	local d = mouse.scroll_delta
 	return just.mouse_over(id, over, "wheel") and d ~= 0 and d
+end
+
+function just.keyboard_over()
+	local id = just.container_id()
+	return not id or just.mouse_over(id, true, "keyboard")
 end
 
 function just.button(id, over, button)
@@ -341,11 +351,6 @@ function just.container(id, over)
 
 	table.insert(containers, id)
 	table.insert(container_overs, over)
-
-	local changed, active, hovered = just.button(id, over)
-	changed = just.active_id == id
-
-	return changed, active, hovered
 end
 
 function just.keypressed(scancode)

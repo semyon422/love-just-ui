@@ -98,6 +98,12 @@ local function window1()
 	if ui.button("Hello6") then print("Hello6") end
 	if ui.button("Hello6") then print("Hello6") end
 	if ui.button("Hello6") then print("Hello6") end
+
+	if just.keyboard_over() then
+		if just.keypressed("q") then
+			print("q")
+		end
+	end
 end
 
 local function window2()
@@ -113,6 +119,12 @@ local function window2()
 	love.graphics.translate(20, 0)
 	if ui.button("Hello1122") then print("Hello1122") end
 	ui.end_window()
+
+	if just.keyboard_over() then
+		if just.keypressed("w") then
+			print("w")
+		end
+	end
 end
 
 local x1, y1 = 200, 300
@@ -124,6 +136,11 @@ local prev_exit, prev_enter
 local mx, my = 0, 0
 local text, index = "", 1
 function love.draw()
+	if just.keyboard_over() then
+		if just.keypressed("e") then
+			print("e")
+		end
+	end
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 	love.graphics.printf(table.concat(enter_exit_log, "\n"), 0, 0, love.graphics.getWidth(), "right")
 

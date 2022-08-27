@@ -141,7 +141,10 @@ function ui.begin_window(id, w, h)
 	end
 	love.graphics.translate(0, window_scrolls[id])
 
-	return just.container(id, over)
+	just.container(id, over)
+	local _, active, hovered = just.button(id, over)
+
+	return just.active_id == id, active, hovered
 end
 
 function ui.end_window()
