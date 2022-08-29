@@ -99,11 +99,9 @@ local function window1()
 	if ui.button("Hello6") then print("Hello6") end
 	if ui.button("Hello6") then print("Hello6") end
 
-	if just.keyboard_over() then
-		if just.keypressed("q") then
-			print("q")
-		end
-	end
+	-- if just.keypressed("q") then
+	-- 	print("q")
+	-- end
 end
 
 local function window2()
@@ -120,11 +118,9 @@ local function window2()
 	if ui.button("Hello1122") then print("Hello1122") end
 	ui.end_window()
 
-	if just.keyboard_over() then
-		if just.keypressed("w") then
-			print("w")
-		end
-	end
+	-- if just.keypressed("w") then
+	-- 	print("w")
+	-- end
 end
 
 local x1, y1 = 200, 300
@@ -136,11 +132,9 @@ local prev_exit, prev_enter
 local mx, my = 0, 0
 local text, index = "", 1
 function love.draw()
-	if just.keyboard_over() then
-		if just.keypressed("e") then
-			print("e")
-		end
-	end
+	-- if just.keypressed("e") then
+	-- 	print("e")
+	-- end
 	love.graphics.printf(event_message, 0, 0, love.graphics.getWidth(), "center")
 	love.graphics.printf(table.concat(enter_exit_log, "\n"), 0, 0, love.graphics.getWidth(), "right")
 
@@ -227,6 +221,33 @@ function love.draw()
 
 	-- text, index = just.textinput(text, index)
 	-- print(text, index)
+
+	if just.keypressed("q") then
+		print("0")
+	end
+	just.container("c0", true)
+		if just.keypressed("q") then
+			print("c0")
+		end
+	just.container()
+	just.container("c1", true)
+		if just.keypressed("q") then
+			print("c1-1")
+		end
+		just.container("c11", true)
+			if just.keypressed("q") then
+				print("c11")
+			end
+		just.container()
+		just.container("c12", true)
+			if just.keypressed("q") then
+				print("c12")
+			end
+		just.container()
+		if just.keypressed("q") then
+			print("c1-2")
+		end
+	just.container()
 
 	mx, my = _mx, _my
 	just._end()

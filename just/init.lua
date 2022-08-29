@@ -35,6 +35,9 @@ local over_id
 local hover_ids = {}
 local next_hover_ids = {}
 
+local keyboard_stack = {}
+local next_keyboard_stack = {}
+
 local containers = {}
 local container_overs = {}
 local zindexes = {}
@@ -227,6 +230,9 @@ function just._end()
 	clear_table(hover_ids)
 	hover_ids, next_hover_ids = next_hover_ids, hover_ids
 
+	clear_table(keyboard_stack)
+	keyboard_stack, next_keyboard_stack = next_keyboard_stack, keyboard_stack
+
 	local new_over_id = hover_ids.mouse
 	if over_id ~= new_over_id then
 		just.exited_id = over_id
@@ -306,8 +312,20 @@ function just.wheel_over(id, over)
 end
 
 function just.keyboard_over()
-	local id = just.container_id()
-	return not id or just.mouse_over(id, true, "keyboard")
+	local layer = #containers
+	if layer == 0 then
+		return true
+	end
+
+	local id = containers[layer]
+	if next_keyboard_stack[layer] ~= id then
+		next_keyboard_stack[layer] = id
+		for i = layer + 1, #next_keyboard_stack do
+			next_keyboard_stack[i] = nil
+		end
+	end
+
+	return keyboard_stack[layer] == id
 end
 
 function just.button(id, over, button)
@@ -353,12 +371,20 @@ function just.container(id, over)
 	table.insert(container_overs, over)
 end
 
-function just.keypressed(scancode)
-	return keyboard.pressed[scancode]
+function just.keypressed(scancode, unset)
+	local res = just.keyboard_over() and keyboard.pressed[scancode]
+	if res and unset then
+		keyboard.pressed[scancode] = nil
+	end
+	return res
 end
 
-function just.keyreleased(scancode)
-	return keyboard.released[scancode]
+function just.keyreleased(scancode, unset)
+	local res = just.keyboard_over() and keyboard.released[scancode]
+	if res and unset then
+		keyboard.released[scancode] = nil
+	end
+	return res
 end
 
 local function text_split(text, index)
@@ -383,6 +409,11 @@ end
 function just.textinput(text, index)
 	text = tostring(text)
 	index = index or utf8.len(text) + 1
+
+	if not just.keyboard_over() then
+		return false, text, index, text_split(text, index)
+	end
+
 	local bt, bi = text, index
 
 	local _text = keyboard.text
