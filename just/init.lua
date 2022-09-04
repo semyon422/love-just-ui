@@ -286,6 +286,7 @@ function just.container_id()
 end
 
 function just.mouse_over(id, over, group, new_zindex)
+	if not id then return end
 	assert(group, "missing group")
 	if not zindexes[id] or new_zindex then
 		last_zindex = last_zindex + 1
@@ -329,6 +330,7 @@ function just.keyboard_over()
 end
 
 function just.button(id, over, button)
+	if not id then return end
 	over = just.mouse_over(id, over, "mouse")
 	button = button or next(mouse.pressed) or next(mouse.released) or next(mouse.down)
 	if mouse.pressed[button] and over then
@@ -351,6 +353,7 @@ function just.button(id, over, button)
 end
 
 function just.slider(id, over, pos, value)
+	if not id then return end
 	local _, active, hovered = just.button(id, over)
 
 	local new_value = value
